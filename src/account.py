@@ -43,20 +43,6 @@ class Account:
         year_birth = int(self.pesel[0:2])
         stulecie = int(self.pesel[2:4])
         return year_birth <= 60 and 1 <= stulecie <= 12
-    def validate_year_birth22(self, promo_code):
-        return
-    def validate_year_birth223(self, promo_code):
-        return
-    def validate_year_birth221(self, promo_code):
-        return
-    def validate_year_birth221(self, promo_code):
-        return
-    def validate_year_birth221(self, promo_code):
-        return
-    def validate_year_birth221(self, promo_code):
-        return
-    def validate_year_birth221(self, promo_code):
-        return
 
 class BusinessAccount(Account):
     def __init__(self, company_name, nip):
