@@ -44,7 +44,6 @@ class Account:
         stulecie = int(self.pesel[2:4])
         return year_birth <= 60 and 1 <= stulecie <= 12
 
-
 class BusinessAccount(Account):
     def __init__(self, company_name, nip):
         self.company_name = company_name
