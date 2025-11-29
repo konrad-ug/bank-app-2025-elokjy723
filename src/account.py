@@ -1,10 +1,11 @@
 class Account:
-    def __init__(self, first_name, last_name, pesel, promo_code=None):
+    def __init__(self, first_name, last_name, pesel, promo_code=None, transfers=None):
         self.first_name = first_name
         self.last_name = last_name
         self.balance = 0.0
         self.pesel = pesel
         self.promo_code = promo_code
+        self.transfers = []
         if self.is_pesel_valid(pesel):
             self.pesel = pesel
         else:
@@ -15,10 +16,15 @@ class Account:
     def transfer_incoming(self, amount):
         if amount > 0:
             self.balance += amount
+            self.transfers.append(amount)
 
     def transfer_outgoing(self, amount):
+        fee = -1
         if amount > 0 and self.balance >= amount:
             self.balance -= amount
+            self.transfers.append(-amount)
+            self.transfers.append(fee)
+
             return True
         return False
 
