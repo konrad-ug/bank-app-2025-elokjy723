@@ -117,3 +117,24 @@ class TestBusinessAccount:
         biz.balance = 0
         result = biz.express_transfer(10)
         assert result is False
+class TestHistoryTransfer:
+    def test_transfer_history_plus(self):
+        account = Account("Jan", "Kowalski", "12345673242",[])
+        account.transfer_incoming(500)
+        account.transfer_outgoing(300)
+        assert account.transfers == [500, -300, -1]
+    def test_transfer_history_minus(self):
+        account = Account("Jan", "Kowalski", "12345673242",[])
+        account.balance = 400
+        account.transfer_outgoing(300)
+        account.transfer_incoming(500)
+        assert account.transfers == [-300, -1, 500]
+    def test_transfer_history_only_plus(self):
+        account = Account("Jan", "Kowalski", "12345673242",[])
+        account.transfer_incoming(500)
+        assert account.transfers == [500]
+    def test_transfer_history_only_minus(self):
+        account = Account("Jan", "Kowalski", "12345673242",[])
+        account.balance = 400
+        account.transfer_outgoing(300)
+        assert account.transfers == [-300, -1]
