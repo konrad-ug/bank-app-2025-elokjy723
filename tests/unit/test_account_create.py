@@ -138,3 +138,50 @@ class TestHistoryTransfer:
         account.balance = 400
         account.transfer_outgoing(300)
         assert account.transfers == [-300, -1]
+
+class TestLoanCapability:
+    def test_loan_capability_pos1(self):
+        account = Account("Jan", "Kowalski", "12345673242",[])
+        account.transfer_incoming(300)
+        account.transfer_incoming(300)
+        account.transfer_incoming(300)
+        account.IsLaon(1000)
+        assert account.balance == 1900
+    def test_loan_capability_pos2(self):
+        account = Account("Jan", "Kowalski", "12345673242",[])
+        account.transfer_incoming(300)
+        account.transfer_incoming(300)
+        account.transfer_incoming(300)
+        account.transfer_incoming(300)
+        account.transfer_incoming(300)
+        account.transfer_incoming(300)
+        account.transfer_incoming(300)
+        account.IsLaon(1000)
+        assert account.balance == 3100
+    def test_loan_capability_neg1(self):
+        account = Account("Jan", "Kowalski", "12345673242",[])
+        account.transfer_incoming(300)
+        account.transfer_incoming(300)
+        account.transfer_outgoing(300)
+        account.IsLaon(1000)
+        assert account.balance == 300
+    def test_loan_capability_pos_5over(self):
+        account = Account("Jan", "Kowalski", "12345673242",[])
+        account.transfer_incoming(300)
+        account.transfer_incoming(300)
+        account.transfer_incoming(300)
+        account.transfer_incoming(300)
+        account.transfer_incoming(300)
+        account.transfer_outgoing(300)
+        account.IsLaon(200)
+        assert account.balance == 1400
+    def test_loan_capability_neg_5over(self):
+        account = Account("Jan", "Kowalski", "12345673242")
+        account.transfer_incoming(300)
+        account.transfer_incoming(300)
+        account.transfer_incoming(300)
+        account.transfer_incoming(300)
+        account.transfer_incoming(300)
+        account.transfer_outgoing(300)
+        account.IsLaon(1400)
+        assert account.balance == 1200
