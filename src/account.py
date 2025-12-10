@@ -69,6 +69,7 @@ class BusinessAccount(Account):
         self.company_name = company_name
         self.nip = nip
         self.balance = 0.0
+        self.transfers=[]
         if not (isinstance(nip, str) and len(nip) == 10 and nip.isdigit()):
             self.nip = "Invalid"
 
@@ -77,8 +78,39 @@ class BusinessAccount(Account):
         total = amount + fee
         if amount > 0 and self.balance + fee >= total:
             self.balance -= total
+            self.transfers.append(-1*amount)
+            self.transfers.append(-1*fee)
             return True
         elif amount > 0 and self.balance >= amount - fee:
             self.balance -= total
+            self.transfers.append(-1*amount)
+            self.transfers.append(-1*fee)
             return True
         return False
+    
+    def take_loan(self, amount):
+        warunek1 = False
+        warunek2 = False
+        if self.balance >= (2*amount):
+            warunek1 = True
+        else:
+            return False
+        for transfer in self.transfers:
+            if transfer == -1775:
+                warunek2 = True
+        if warunek2 and warunek1:
+            self.balance += amount
+            return True
+        return False
+
+class AccountRegistry():
+    def __init__(self):
+        self.accounts = []
+    
+    def add_account(self,account:PersonalAccount):
+        self.accounts.append(account)
+    def search_account_pesel(self, pesel):
+        for acc in self.accounts:
+            if acc.pesel == pesel:
+                return acc
+            
