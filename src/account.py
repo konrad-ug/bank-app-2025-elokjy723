@@ -12,12 +12,31 @@ class Account:
             self.pesel = "invalid"
         if self.validate_code(promo_code) and not self.validate_year_birth(promo_code):
             self.balance += 50
+    
+    def condition1(self):
+        if len(self.transfers)>=3:
+            trzy_ostatnie = self.transfers[-3:]
+            for i in trzy_ostatnie:
+                if i < 0:
+                    return False
+            return True
+    def condition2(self, loan):
+        if len(self.transfers)>=5:
+            piec_ostatnich = self.transfers[-5:]
+            if sum(piec_ostatnich) >= loan:
+                return True
+        return False
 
+    def submit_for_loan(self, loan):
+        if self.condition1() or self.condition2(loan):
+            self.balance += loan
+            return True
+        else:
+            return False
     def transfer_incoming(self, amount):
         if amount > 0:
             self.balance += amount
             self.transfers.append(amount)
-
     def transfer_outgoing(self, amount):
         fee = -1
         if amount > 0 and self.balance >= amount:
@@ -27,7 +46,6 @@ class Account:
 
             return True
         return False
-
     def express_transfer(self, amount):
         fee = 1
         total = amount + fee
@@ -38,18 +56,14 @@ class Account:
             self.balance -= total
             return True
         return False
-
     def is_pesel_valid(self, pesel):
         return isinstance(pesel, str) and len(pesel) == 11
-
     def validate_code(self, promo_code):
         return isinstance(promo_code, str) and promo_code.startswith("PROM_") and len(promo_code) == 8
-
     def validate_year_birth(self, promo_code):
         year_birth = int(self.pesel[0:2])
         stulecie = int(self.pesel[2:4])
         return year_birth <= 60 and 1 <= stulecie <= 12
-
 class BusinessAccount(Account):
     def __init__(self, company_name, nip):
         self.company_name = company_name
