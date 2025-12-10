@@ -12,20 +12,23 @@ class Account:
             self.pesel = "invalid"
         if self.validate_code(promo_code) and not self.validate_year_birth(promo_code):
             self.balance += 50
-    def IsLaon(self, loan):
-        warunek1 = True
-        warunek2 = False
+    
+    def condition1(self):
         if len(self.transfers)>=3:
             trzy_ostatnie = self.transfers[-3:]
             for i in trzy_ostatnie:
                 if i < 0:
-                    warunek1 = False
-                    break
-            if len(self.transfers)>=5:
-                piec_ostatnich = self.transfers[-5:]
-                if sum(piec_ostatnich) >= loan:
-                    warunek2 = True
-        if warunek1 or warunek2:
+                    return False
+            return True
+    def condition2(self, loan):
+        if len(self.transfers)>=5:
+            piec_ostatnich = self.transfers[-5:]
+            if sum(piec_ostatnich) >= loan:
+                return True
+        return False
+
+    def submit_for_loan(self, loan):
+        if self.condition1() or self.condition2(loan):
             self.balance += loan
             return True
         else:
