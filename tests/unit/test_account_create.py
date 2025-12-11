@@ -1,5 +1,5 @@
 import pytest
-from src.account import Account, BusinessAccount
+from src.account import Account, BusinessAccount, AccountRegistry
 
 
 class TestAccount:
@@ -8,108 +8,110 @@ class TestAccount:
         assert sample_account.last_name == "Kowalski"
         assert sample_account.balance == 0.0
 
-    @pytest.mark.parametrize("pesel, expected", [("123456789", "invalid"),("12345678912314323453425", "invalid")])
-    def test_account_creation_pesel(self, pesel, expected):
-        account = Account("John", "Doe", pesel, expected)
+    @pytest.mark.parametrize("pesel,promo,expected", [
+        ("123456789", "INVALID", "invalid"),
+        ("12345678912314323453425", "INVALID", "invalid"),
+        ("12345678901", "INVALID", "12345678901"),
+    ])
+    def test_account_creation_pesel(self, pesel, promo, expected):
+        account = Account("John", "Doe", pesel, promo)
         assert account.pesel == expected
 
-    @pytest.mark.parametrize("code, pesel, expected", [("PROM_XYZ","12345678901",50),("SPROM_XYZ","12345678901",0),("PROM_XY","12345678901", 0),("SWER_XY","12345678901",0),("PROM_XYZ","61010100016",50),("PROM_XYZ","59010100013",0),("PROM_XYZ","60010100019",0)])
-    def test_account_promo_code_valid(self, code,pesel, expected):
+    @pytest.mark.parametrize("code,pesel,expected", [
+        ("PROM_XYZ", "12345678901", 50),
+        ("SPROM_XYZ", "12345678901", 0),
+        ("PROM_XY", "12345678901", 0),
+        ("SWER_XY", "12345678901", 0),
+        ("PROM_XYZ", "61010100016", 50),
+        ("PROM_XYZ", "59010100013", 0),
+        ("PROM_XYZ", "60010100019", 0),
+        ("PROM_XYZ", "00000000000", 50),
+        (None, "12345678901", 0),
+    ])
+    def test_account_promo_code_valid(self, code, pesel, expected):
         account = Account("John", "Doe", pesel, code)
         assert account.balance == expected
 
-    
-
 
 class TestTransfers:
-    def test_transfer_incoming(self, sample_account):
-        sample_account.transfer_incoming(100)
-        assert sample_account.balance == 100
+    @pytest.mark.parametrize("start_balance,amount,expected_balance,expected_transfers", [
+        (0, 100, 100, [100]),
+        (0, 0, 0, []),
+        (0, -50, 0, []),
+    ])
+    def test_transfer_incoming(self, sample_account, start_balance, amount, expected_balance, expected_transfers):
+        sample_account.balance = start_balance
+        sample_account.transfer_incoming(amount)
+        assert sample_account.balance == expected_balance
+        assert sample_account.transfers == expected_transfers
 
-    def test_transfer_outgoing_success(self, sample_account):
-        sample_account.balance = 200
-        result = sample_account.transfer_outgoing(100)
-        assert result is True
-        assert sample_account.balance == 100
-
-    def test_transfer_outgoing_fail(self, sample_account):
-        sample_account.balance = 50
-        result = sample_account.transfer_outgoing(100)
-        assert result is False
-        assert sample_account.balance == 50
+    @pytest.mark.parametrize("start_balance,amount,expected_result,expected_balance,expected_transfers", [
+        (200, 100, True, 100, [-100, -1]),
+        (50, 100, False, 50, []),
+        (0, 0, False, 0, []),
+    ])
+    def test_transfer_outgoing(self, sample_account, start_balance, amount, expected_result, expected_balance, expected_transfers):
+        sample_account.balance = start_balance
+        result = sample_account.transfer_outgoing(amount)
+        assert result is expected_result
+        assert sample_account.balance == expected_balance
+        assert sample_account.transfers == expected_transfers
 
 
 class TestExpressTransfer:
-    def test_express_transfer_personal_success(self, sample_account):
-        sample_account.balance = 100
-        result = sample_account.express_transfer(50)
-        assert result is True
-        assert sample_account.balance == 49
-
-    def test_express_transfer_personal_negative_limit(self, sample_account):
-        sample_account.balance = 0
-        result = sample_account.express_transfer(1)
-        assert result is True
-        assert sample_account.balance == -2
-
-    def test_express_transfer_personal_fail(self, sample_account):
-        sample_account.balance = 0
-        result = sample_account.express_transfer(10)
-        assert result is False
+    @pytest.mark.parametrize("start_balance,amount,expected_result,expected_balance", [
+        (100, 50, True, 49),
+        (0, 1, True, -2),
+        (0, 10, False, 0),
+        (0, 0.5, True, -1.5),
+    ])
+    def test_express_transfer_personal(self, sample_account, start_balance, amount, expected_result, expected_balance):
+        sample_account.balance = start_balance
+        result = sample_account.express_transfer(amount)
+        assert result is expected_result
+        assert sample_account.balance == expected_balance
 
 
 class TestBusinessAccount:
-    def test_business_account_creation_valid_nip(self):
-        biz = BusinessAccount("ABC", "1234567890")
-        assert biz.company_name == "ABC"
-        assert biz.nip == "1234567890"
+    @pytest.mark.parametrize("company,nip,expected_nip", [
+        ("ABC", "1234567890", "1234567890"),
+        ("ABC", "12", "Invalid"),
+    ])
+    def test_business_account_creation(self, company, nip, expected_nip):
+        biz = BusinessAccount(company, nip)
+        assert biz.company_name == company
+        assert biz.nip == expected_nip
         assert biz.balance == 0.0
 
-    def test_business_account_invalid_nip(self):
-        biz = BusinessAccount("ABC", "12")
-        assert biz.nip == "Invalid"
-
-    def test_business_express_transfer_success(self):
+    @pytest.mark.parametrize("start_balance,amount,expected_result,expected_balance", [
+        (100, 50, True, 45),
+        (0, 1, True, -6),
+        (0, 10, False, 0),
+    ])
+    def test_business_express_transfer(self, start_balance, amount, expected_result, expected_balance):
         biz = BusinessAccount("ABC", "1234567890")
-        biz.balance = 100
-        result = biz.express_transfer(50)
-        assert result is True
-        assert biz.balance == 45
-
-    def test_business_express_transfer_negative_limit(self):
-        biz = BusinessAccount("ABC", "1234567890")
-        biz.balance = 0
-        result = biz.express_transfer(1)
-        assert result is True
-        assert biz.balance == -6
-
-    def test_business_express_transfer_fail(self):
-        biz = BusinessAccount("ABC", "1234567890")
-        biz.balance = 0
-        result = biz.express_transfer(10)
-        assert result is False
+        biz.balance = start_balance
+        result = biz.express_transfer(amount)
+        assert result is expected_result
+        assert biz.balance == expected_balance
 
 
 class TestHistoryTransfer:
-    def test_transfer_history_plus(self, sample_account):
-        sample_account.transfer_incoming(500)
-        sample_account.transfer_outgoing(300)
-        assert sample_account.transfers == [500, -300, -1]
-
-    def test_transfer_history_minus(self, sample_account):
-        sample_account.balance = 400
-        sample_account.transfer_outgoing(300)
-        sample_account.transfer_incoming(500)
-        assert sample_account.transfers == [-300, -1, 500]
-
-    def test_transfer_history_only_plus(self, sample_account):
-        sample_account.transfer_incoming(500)
-        assert sample_account.transfers == [500]
-
-    def test_transfer_history_only_minus(self, sample_account):
-        sample_account.balance = 400
-        sample_account.transfer_outgoing(300)
-        assert sample_account.transfers == [-300, -1]
+    @pytest.mark.parametrize("ops,expected", [
+        (["+500", "-300"], [500, -300, -1]),
+        (["-300", "+500"], [-300, -1, 500]),
+        (["+500"], [500]),
+        (["-300"], [-300, -1]),
+    ])
+    def test_transfer_history(self, sample_account, ops, expected):
+        for op in ops:
+            amount = int(op[1:])
+            if op.startswith("+"):
+                sample_account.transfer_incoming(amount)
+            else:
+                sample_account.balance = max(sample_account.balance, amount)
+                sample_account.transfer_outgoing(amount)
+        assert sample_account.transfers == expected
 
 
 class TestLoanCapability:
@@ -146,3 +148,51 @@ class TestLoanCapability:
         sample_account.transfer_outgoing(300)
         sample_account.submit_for_loan(1400)
         assert sample_account.balance == 1200
+
+    def test_condition1_none_case(self, sample_account):
+        sample_account.transfer_incoming(100)
+        assert sample_account.condition1() is None
+
+    def test_condition2_short_history(self, sample_account):
+        sample_account.transfer_incoming(100)
+        assert sample_account.condition2(500) is False
+
+
+class TestBussinessLoan:
+    def test_loan_bussiness_pos(self, sample_bussiness_account):
+        sample_bussiness_account.balance = 10000
+        sample_bussiness_account.express_transfer(1775)
+        sample_bussiness_account.take_loan(200)
+        assert sample_bussiness_account.balance == 8420
+
+    def test_loan_bussiness_withoutZUS(self, sample_bussiness_account):
+        sample_bussiness_account.balance = 10000
+        sample_bussiness_account.take_loan(200)
+        assert sample_bussiness_account.balance == 10000
+
+    def test_loan_bussiness_without2timesmore(self, sample_bussiness_account):
+        sample_bussiness_account.balance = 10000
+        sample_bussiness_account.express_transfer(1775)
+        sample_bussiness_account.take_loan(6000)
+        assert sample_bussiness_account.balance == 8220
+
+    def test_loan_bussiness_other_transfer_no_loan(self, sample_bussiness_account):
+        sample_bussiness_account.balance = 10000
+        sample_bussiness_account.express_transfer(1000)
+        sample_bussiness_account.take_loan(200)
+        assert sample_bussiness_account.balance == 8995
+
+
+class TestAccountRegister:
+    
+    def test_account_register(self,sample_account):
+        reg = AccountRegistry()
+        reg.add_account(sample_account)
+        assert reg.number_of_accounts() == 1
+        assert reg.all_accounts() == [sample_account]
+        assert reg.search_account_pesel("12345673242") == sample_account
+    def test_account_register_neg(self):
+        reg = AccountRegistry()
+        acc1 = Account("Jan", "Kowalski", "213131241242354")
+        reg.add_account(acc1)
+        assert reg.number_of_accounts() == 0
