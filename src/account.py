@@ -103,14 +103,22 @@ class BusinessAccount(Account):
             return True
         return False
 
-class AccountRegistry():
+class AccountRegistry:
     def __init__(self):
         self.accounts = []
     
-    def add_account(self,account:PersonalAccount):
-        self.accounts.append(account)
+    def add_account(self, account:Account):
+        if account.pesel != "invalid":
+            self.accounts.append(account)
+
     def search_account_pesel(self, pesel):
         for acc in self.accounts:
             if acc.pesel == pesel:
                 return acc
+    
+    def all_accounts(self):
+        return self.accounts
+    
+    def number_of_accounts(self):
+        return len(self.accounts)
             
