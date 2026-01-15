@@ -1,4 +1,6 @@
 import pytest
+import json
+from app.api import app, registry
 from src.account import Account, BusinessAccount, AccountRegistry
 
 
@@ -196,3 +198,5 @@ class TestAccountRegister:
         acc1 = Account("Jan", "Kowalski", "213131241242354")
         reg.add_account(acc1)
         assert reg.number_of_accounts() == 0
+
+
