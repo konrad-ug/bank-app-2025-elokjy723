@@ -59,3 +59,13 @@ def test_delete_account(client):
     get_response = client.get(f"/api/accounts/{pesel}")
     assert get_response.status_code == 404
     assert registry.number_of_accounts() == 0
+
+def test_create_duplicate_account(client):
+    registry.accounts = []
+    payload = {"name": "Jan", "surname": "Nowak", "pesel": "12345678901"}
+    
+    client.post("/api/accounts", json=payload)
+    
+    response = client.post("/api/accounts", json=payload)
+    assert response.status_code == 409
+    assert response.get_json()["message"] == "Account with this pesel already exists"

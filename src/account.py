@@ -107,9 +107,14 @@ class AccountRegistry:
     def __init__(self):
         self.accounts = []
     
-    def add_account(self, account:Account):
+    def add_account(self, account: Account):
+        if self.search_account_pesel(account.pesel):
+            return False
+            
         if account.pesel != "invalid":
             self.accounts.append(account)
+            return True
+        return False
 
     def search_account_pesel(self, pesel):
         for acc in self.accounts:
