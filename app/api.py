@@ -12,7 +12,6 @@ def create_account():
 
     pesel = data.get("pesel")
 
-    # Feature 16: Unikalny PESEL
     if registry.search_account_pesel(pesel):
         return jsonify({"message": "Account with this pesel already exists"}), 409
 
@@ -74,7 +73,6 @@ def delete_account(pesel):
     registry.accounts.remove(account)
     return jsonify({"message": "Account deleted"}), 200
 
-# Feature 17: Przelewy
 @app.route("/api/accounts/<pesel>/transfer", methods=['POST'])
 def make_transfer(pesel):
     account = registry.search_account_pesel(pesel)

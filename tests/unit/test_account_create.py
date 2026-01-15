@@ -198,7 +198,6 @@ class TestAccountRegister:
         acc1 = Account("Jan", "Kowalski", "213131241242354")
         reg.add_account(acc1)
         assert reg.number_of_accounts() == 0
-        # tests/unit/test_account_create.py (na samym dole)
 
 def test_registry_add_duplicate(sample_account):
     registry = AccountRegistry()
