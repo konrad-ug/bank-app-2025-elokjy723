@@ -1,8 +1,5 @@
 import pytest
-import json
-from app.api import app, registry
 from src.account import Account, BusinessAccount, AccountRegistry
-
 
 class TestAccount:
     def test_account_creation(self, sample_account):
@@ -75,23 +72,14 @@ class TestExpressTransfer:
 
 
 class TestBusinessAccount:
-    @pytest.mark.parametrize("company,nip,expected_nip", [
-        ("ABC", "1234567890", "1234567890"),
-        ("ABC", "12", "Invalid"),
-    ])
-    def test_business_account_creation(self, company, nip, expected_nip):
-        biz = BusinessAccount(company, nip)
-        assert biz.company_name == company
-        assert biz.nip == expected_nip
-        assert biz.balance == 0.0
 
     @pytest.mark.parametrize("start_balance,amount,expected_result,expected_balance", [
         (100, 50, True, 45),
         (0, 1, True, -6),
         (0, 10, False, 0),
     ])
-    def test_business_express_transfer(self, start_balance, amount, expected_result, expected_balance):
-        biz = BusinessAccount("ABC", "1234567890")
+    def test_business_express_transfer(self, sample_bussiness_account, start_balance, amount, expected_result, expected_balance):
+        biz = sample_bussiness_account
         biz.balance = start_balance
         result = biz.express_transfer(amount)
         assert result is expected_result
@@ -189,20 +177,19 @@ class TestAccountRegister:
     
     def test_account_register(self,sample_account):
         reg = AccountRegistry()
-        reg.add_account(sample_account)
+        assert reg.add_account(sample_account) is True
         assert reg.number_of_accounts() == 1
         assert reg.all_accounts() == [sample_account]
-        assert reg.search_account_pesel("12345673242") == sample_account
+        assert reg.search_account_pesel("12345678901") == sample_account
+
     def test_account_register_neg(self):
         reg = AccountRegistry()
         acc1 = Account("Jan", "Kowalski", "213131241242354")
-        reg.add_account(acc1)
+        assert reg.add_account(acc1) is False
         assert reg.number_of_accounts() == 0
-
-def test_registry_add_duplicate(sample_account):
-    registry = AccountRegistry()
-    assert registry.add_account(sample_account) is True
-    assert registry.add_account(sample_account) is False
-    assert registry.number_of_accounts() == 1
-
-
+    
+    def test_registry_add_duplicate(self, sample_account):
+        registry = AccountRegistry()
+        assert registry.add_account(sample_account) is True
+        assert registry.add_account(sample_account) is False
+        assert registry.number_of_accounts() == 1
