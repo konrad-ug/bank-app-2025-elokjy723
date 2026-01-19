@@ -3,3 +3,4 @@ coverage==6.5.0
 Flask==2.2.5
 Werkzeug==2.2.3
 requests==2.31.0
+pytest-mock
