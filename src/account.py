@@ -1,6 +1,7 @@
 import os
 import datetime
 import requests
+from src.smtp.smtp import SMTPClient
 
 class Account:
     def __init__(self, first_name, last_name, pesel, promo_code=None):
@@ -77,6 +78,13 @@ class Account:
         stulecie = int(self.pesel[2:4])
         return year_birth <= 60 and 1 <= stulecie <= 12
 
+    def send_history_via_email(self, email):
+        today = datetime.date.today().strftime("%Y-%m-%d")
+        subject = f"Account Transfer History {today}"
+        text = f"Personal account history: {self.transfers}"
+        smtp = SMTPClient()
+        return smtp.send(subject, text, email)
+
 
 class BusinessAccount(Account):
     def __init__(self, company_name, nip):
@@ -138,6 +146,13 @@ class BusinessAccount(Account):
             self.balance += amount
             return True
         return False
+
+    def send_history_via_email(self, email):
+        today = datetime.date.today().strftime("%Y-%m-%d")
+        subject = f"Account Transfer History {today}"
+        text = f"Company account history: {self.transfers}"
+        smtp = SMTPClient()
+        return smtp.send(subject, text, email)
 
 
 class AccountRegistry:
